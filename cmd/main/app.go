@@ -1,35 +1,61 @@
 package main
 
 import (
+	"fmt"
+	"github.com/Salavei/golang_advanced_restapi/internal/config"
 	"github.com/Salavei/golang_advanced_restapi/internal/user"
 	"github.com/Salavei/golang_advanced_restapi/pkg/logging"
 	"github.com/julienschmidt/httprouter"
 	"net"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 	"time"
 )
 
 func main() {
 
-	logging.Init()
 	logger := logging.GetLogger()
-
 	logger.Info("create router")
-
 	router := httprouter.New()
+
+	cfg := config.GetConfig()
+
 	handler := user.NewHandler(logger)
 	handler.Register(router)
 
-	start(router)
+	start(router, cfg)
 }
 
-func start(router *httprouter.Router) {
+func start(router *httprouter.Router, cfg *config.Config) {
 	logger := logging.GetLogger()
 	logger.Info("start application")
 
-	listener, err := net.Listen("tcp", ":3000")
-	if err != nil {
-		panic(err)
+	var listener net.Listener
+	var listenErr error
+
+	if cfg.Listen.Type == "sock" {
+		logger.Info("detect app path")
+		appDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			logger.Fatal(err)
+		}
+		logger.Info("create socket")
+		socketPath := path.Join(appDir, "app.sock")
+
+		logger.Info("listen unix socket")
+		listener, listenErr = net.Listen("unix", socketPath)
+		logger.Infof("server is listening unix socket: %s", socketPath)
+	} else {
+
+		logger.Info("listen tcp")
+		listener, listenErr = net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port))
+		logger.Infof("server is listening %s:%s", cfg.Listen.BindIP, cfg.Listen.Port)
+	}
+
+	if listenErr != nil {
+		logger.Fatal(listenErr)
 	}
 
 	server := &http.Server{
@@ -38,6 +64,5 @@ func start(router *httprouter.Router) {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	logger.Info("server is listening 0.0.0.0:3000")
 	logger.Fatal(server.Serve(listener))
 }
