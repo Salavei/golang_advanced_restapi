@@ -19,8 +19,20 @@ func main() {
 	logger := logging.GetLogger()
 	logger.Info("create router")
 	router := httprouter.New()
-
 	cfg := config.GetConfig()
+
+	//
+	//cfgMongo := cfg.MongoDB
+	//NewClient, err := mongodb.NewClient(context.Background(), cfgMongo.Host, cfgMongo.Port, cfgMongo.Username,
+	//	cfgMongo.Password, cfgMongo.Database, cfgMongo.AuthDB)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//storage := db.NewStorage(NewClient, cfg.MongoDB.Collection, logger)
+	//
+	//result, _ := storage.FindAll(context.Background())
+	//fmt.Println(result)
+	//
 
 	handler := user.NewHandler(logger)
 	handler.Register(router)
