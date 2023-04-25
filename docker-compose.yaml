@@ -1,11 +1,19 @@
 version: "3"
 services:
-  db:
-    image: mongo
-    restart: always
-    platform: linux/x86_64
-    networks:
-      - default
+#  mongo_db:
+#    image: mongo
+#    restart: always
+#    ports:
+#      - "27017:27017"
+  postgresql_db:
+    image: postgres:14.6-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_PASSWORD: go123456
+      POSTGRES_USER: goroot
+      POSTGRES_DB: user-service
     ports:
-      - "27017:27017"
-    container_name: mongodb
+      - "5432:5432"
+volumes:
+  postgres_data:
